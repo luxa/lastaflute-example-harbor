@@ -8,7 +8,10 @@
   <property resource="harbor_env_${lasta.env}.properties" />
   <property name="domain.name" value="harbor"/>
   <property name="log.level" value="${log.level:-debug}"/>
-  <property name="log.pattern" value="%d [%t] %-5p \\(%C{0}@%M\\(\\):%L\\) - %m%n"/>
+  <property name="log.pattern" value="%d [%t] %-5p [DF] \\(%C{0}@%M\\(\\):%L\\) - %m%n"/>
+  <property name="log.app.pattern" value="%d [%t] %-5p [AP] \\(%C{0}@%M\\(\\):%L\\) - %m%n"/>
+  <property name="log.error.pattern" value="%d [%t] %-5p [ER] \\(%C{0}@%M\\(\\):%L\\) - %m%n"/>
+  <property name="log.mail.pattern" value="%d [%t] %-5p [ML] \\(%C{0}@%M\\(\\):%L\\) - %m%n"/>
   <property name="log.file.basedir" value="${log.file.basedir:-/tmp/lastaflute/undefinedbasedir}"/>
   <property name="log.file.encoding" value="UTF-8"/>
   <property name="backup.date.suffix" value="_%d{yyyyMMdd}"/>
@@ -18,33 +21,17 @@
     <encoder><charset>${log.file.encoding}</charset><pattern>${log.pattern}</pattern></encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter"><level>${log.console.level}</level></filter>
   </appender>
-  <appender name="appfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>${log.file.basedir}/app_${domain.name}.log</File>
-    <Append>true</Append>
-    <encoder><charset>${log.file.encoding}</charset><pattern>${log.pattern}</pattern></encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${log.file.basedir}/backup/app_${domain.name}${backup.date.suffix}.log</fileNamePattern>
-      <maxHistory>${backup.max.history}</maxHistory>
-    </rollingPolicy>
+  <appender name="appfile" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><charset>${log.file.encoding}</charset><pattern>${log.app.pattern}</pattern></encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter"><level>${log.console.level}</level></filter>
   </appender>
-  <appender name="errorfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>${log.file.basedir}/error_${domain.name}.log</File>
-    <Append>true</Append>
-    <encoder><charset>${log.file.encoding}</charset><pattern>${log.pattern}</pattern></encoder>
+  <appender name="errorfile" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><charset>${log.file.encoding}</charset><pattern>${log.error.pattern}</pattern></encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter"><level>ERROR</level></filter>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${log.file.basedir}/backup/error_${domain.name}${backup.date.suffix}.log</fileNamePattern>
-      <maxHistory>${backup.max.history}</maxHistory>
-    </rollingPolicy>
   </appender>
-  <appender name="mailfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>${log.file.basedir}/mail_${domain.name}.log</File>
-    <Append>true</Append>
-    <encoder><charset>${log.file.encoding}</charset><pattern>${log.pattern}</pattern></encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${log.file.basedir}/backup/mail_${domain.name}${backup.date.suffix}.log</fileNamePattern>
-      <maxHistory>${backup.max.history}</maxHistory>
-    </rollingPolicy>
+  <appender name="mailfile" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><charset>${log.file.encoding}</charset><pattern>${log.mail.pattern}</pattern></encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter"><level>${log.console.level}</level></filter>
   </appender>
 
   <logger name="org.dbflute" additivity="false" level="${log.level}">
