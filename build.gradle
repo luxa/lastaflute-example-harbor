@@ -1,0 +1,190 @@
+buildscript {
+    repositories {
+        maven { url 'https://repo.maven.apache.org/maven2'}
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+    dependencies {
+        classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.14.0'
+        classpath 'gradle.plugin.se.patrikerdes:gradle-use-latest-versions-plugin:0.2.3'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
+        // classpath 'com.bmuschko:gradle-docker-plugin:6.6.1'
+        classpath "se.transmode.gradle:gradle-docker:1.2"
+    }
+}
+
+def defaultEncoding = "${defaultEncoding}"
+tasks.withType(AbstractCompile)*.options*.encoding = defaultEncoding
+tasks.withType(GroovyCompile)*.groovyOptions*.encoding = defaultEncoding
+
+allprojects  {
+    apply plugin: 'project-report'
+    apply plugin: 'com.github.ben-manes.versions'
+    apply plugin: 'se.patrikerdes.use-latest-versions'
+    // apply plugin: 'com.bmuschko.docker-remote-api'
+    apply plugin: 'docker'
+
+
+    group   = "${appGroupId}"
+    version = "${appVersion}"
+
+    // user --gradle-version
+    // task wrapper(type: Wrapper) { gradleVersion = buildGradleVersion }
+
+    def eol = org.codehaus.groovy.tools.Utilities.eol()
+    afterEvaluate { project ->
+        def buildshipFile = project.file('.settings/org.eclipse.buildship.core.prefs')
+        if (buildshipFile.exists()) {
+            def lines = buildshipFile.readLines()
+            buildshipFile.withWriter { writer ->
+                lines.each { line ->
+                    if (!line.startsWith('#')) {
+                        writer.print line + eol.normalize()   // 改行はLF固定にする
+                    }
+                }
+            }
+        }
+    }
+
+    apply plugin: 'base'
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'war'
+    apply plugin: 'application'
+
+    sourceCompatibility = "${sourceCompatibility}"
+    targetCompatibility = "${targetCompatibility}"
+
+    repositories {
+        mavenLocal()
+        maven {url 'https://repo.maven.apache.org/maven2'}
+        maven {url 'https://oss.sonatype.org/content/repositories/snapshots'}
+    }
+/*
+    if (isEclipseBuildship()) {
+        apply plugin: 'eclipse'
+        eclipse {
+            project.natures.clear()
+            project.buildCommands.clear()
+            project {
+                natures 'org.eclipse.jdt.core.javanature'
+                buildCommand 'org.eclipse.jdt.core.javabuilder'
+                natures 'net.sf.eclipsecs.core.CheckstyleNature'
+                buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
+            }
+            classpath {
+                defaultOutputDir = sourceSets.main.output.classesDirs.getSingleFile()
+                file.whenMerged { cp ->
+                    cp.entries.findAll {
+                        it instanceof org.gradle.plugins.ide.eclipse.model.SourceFolder && it.path.startsWith('src/test/')
+                    }*.output = sourceSets.test.output.classesDirs.getSingleFile().path - (projectDir.path + File.separator)
+                    cp.entries.findAll {
+                        it instanceof org.gradle.plugins.ide.eclipse.model.Library || it instanceof org.gradle.plugins.ide.eclipse.model.SourceFolder
+                    }.each {
+                        if (it.entryAttributes['gradle_used_by_scope'] == 'test') {
+                            it.entryAttributes['test'] = 'true'
+                        }
+                    }
+                }
+            }
+        }
+        afterEvaluate { project ->
+            task eclipseWtp(overwrite: true) {}
+        }
+    }
+*/
+
+    def scmBranch = 'unknown'
+    def scmRevision = 'unknown'
+
+    try {
+        scmBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+        scmRevision = 'git rev-parse HEAD'.execute().text.trim()
+    } catch (Exception ignored) {
+    }
+
+    tasks.withType(Jar) {
+        includeEmptyDirs = false
+        manifest {
+            attributes 'Implementation-Title': project.name
+            attributes 'Implementation-Version': project.version
+            attributes 'SCM-Branch': System.getenv()['SCM_BRANCH'] ?: scmBranch
+            attributes 'SCM-Revision': scmRevision
+            attributes 'Build-Timestamp': new java.text.SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ss.SSS').format(new Date())
+            attributes 'Jenkins-Build-Number': System.getenv()['BUILD_NUMBER'] ?: ''
+        }
+    }
+
+    // compileJava     { options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" }
+    // compileTestJava { options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" }
+
+    test { ignoreFailures = true }
+
+    dependencies {
+        // ===================================================================================
+        //                                                                      Main Framework
+        //                                                                      ==============
+        compile "org.dbflute:dbflute-runtime:${dbfluteVersion}"
+        compile "org.lastaflute:lastaflute:${lastafluteVersion}"
+        compile "org.lastaflute.html:lasta-thymeleaf:${lastaThymeleafVersion}"
+        runtime "com.h2database:h2:${h2JdbcVersion}"
+
+        // ===================================================================================
+        //                                                                     Partner Library
+        //                                                                     ===============
+        runtime "javax.transaction:javax.transaction-api:${transactionApiVersion}"
+        compile "org.slf4j:slf4j-api:${slf4jVersion}"
+        runtime "ch.qos.logback:logback-classic:${logbackVersion}"
+        compileOnly "javax.servlet:javax.servlet-api:${servletVersion}"
+        compileOnly "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"  // コンパイルだけで使わない.
+
+        // ===================================================================================
+        //                                                                GoodNeighbor Library
+        //                                                                ====================
+        compile "org.apache.commons:commons-lang3:${commonsLangVersion}"
+        compile "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+
+        // ===================================================================================
+        //                                                                           Unit Test
+        //                                                                           =========
+        testCompile "junit:junit:${junitVersion}"
+        testCompile "org.dbflute.utflute:utflute-lastaflute:${utfluteVersion}"
+        testRuntime "javax.transaction:javax.transaction-api:${transactionApiVersion}"
+        testRuntime "com.h2database:h2:${h2JdbcVersion}"
+        testRuntime "javax.servlet:javax.servlet-api:${servletVersion}"
+        testRuntime "ch.qos.logback:logback-classic:${logbackVersion}"
+    }
+
+    // ===================================================================================
+    //                                                                      BUild WAR file
+    //                                                                      ==============
+    war {
+        archiveName = "${project.name}.war"
+        into('etc/testdb') { // H2のデータベースファイルをコピー
+            from fileTree(dir:'etc/testdb', includes: ['maihamadb.mv.db'])
+        }
+    }
+    mainClassName = "org.docksidestage.HarborBoot"
+
+    // ===================================================================================
+    //                                                                              Docker
+    //                                                                              ======
+    // -----------------------------------------------------
+    //                                           Build Image
+    //                                           -----------
+    task buildDockerImage(type: Docker, dependsOn: build) {
+        // default tag; ${project.group}/${applicationName}:${tagVersion}
+        // tagVersion: default project.version
+        applicationName = "harbor"
+        tagVersion = "latest"
+        dockerfile = file('docker/Dockerfile')
+        doFirst {
+            copy {
+               from "build/libs/${project.name}.war"
+               into 'docker/ROOT.war'
+            }
+        }
+        doLast {
+            delete 'docker/ROOT.war'
+        }
+    }
+}
