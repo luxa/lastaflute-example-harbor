@@ -162,29 +162,92 @@ allprojects  {
         into('etc/testdb') { // H2のデータベースファイルをコピー
             from fileTree(dir:'etc/testdb', includes: ['maihamadb.mv.db'])
         }
+        doFirst { // そのままprintすると実行ではなく評価中にも出力するのでdoFirstブロック内で
+            // 面倒なのでDBはgitに登録しちゃおう.
+            if (!new File('etc/testdb/maihamadb.mv.db').exists()) {
+                print "Not exists db file, execute dbflute_maihamadb/build.sh 0"
+            }
+        }
     }
     mainClassName = "org.docksidestage.HarborBoot"
 
     // ===================================================================================
     //                                                                              Docker
     //                                                                              ======
+    def groupId    = "${appGroupId}"
+    def artifactId = "harbor"
+    def version    = "latest" // tagVersion: default project.version
+    def tag        = "${groupId}/${artifactId}:${version}"
+
     // -----------------------------------------------------
     //                                           Build Image
     //                                           -----------
-    task buildDockerImage(type: Docker, dependsOn: build) {
-        // default tag; ${project.group}/${applicationName}:${tagVersion}
-        // tagVersion: default project.version
-        applicationName = "harbor"
-        tagVersion = "latest"
-        dockerfile = file('docker/Dockerfile')
+    task buildDockerImage(type: Exec, dependsOn: build) {
+        group = "build"
+        description ="Build Docker image"
+
+        workingDir  "docker"
+        commandLine "docker"
+        args 'build', '-t' , "${tag}", '.'
+
         doFirst {
             copy {
                from "build/libs/${project.name}.war"
-               into 'docker/ROOT.war'
+               into "docker"
             }
         }
         doLast {
-            delete 'docker/ROOT.war'
+            delete 'docker/${project.name}.war'
         }
     }
+
+    // -----------------------------------------------------
+    //                                         Run Container
+    //                                         -------------
+    task runDocker(type: Exec) {
+        commandLine "docker"
+        args 'run', '--name', "harbor", '-d', '-e', 'CATALINA_OPTS="-Dlasta.env=integration"', '-p', '8888:8080',  "${groupId}/${artifactId}"
+    }
+
+    // -----------------------------------------------------
+    //                                        Stop Container
+    //                                        --------------
+    task stopDocker() {
+        // 対応するの面倒だから停止は手動で...
+        doFirst {
+            print "# Execute commands\n"
+            print "container_id=`docker ps | grep 'aucl.sample/harbor' | awk '{ print \$1 }'`\n"
+            print "docker stop \$container_id\n"
+            print "docker rm \$container_id\n"
+        }
+
+    }
+    // shellで実行
+    // container_id=`docker ps | grep "aucl.sample/harbor" | awk '{ print $1 }'`
+    // docker stop $container_id
+    // docker rm $container_id
+
+    // -----------------------------------------------------
+    //                                           Build Image
+    //                                           -----------
+    // docker build -t org.docksidestage/harbor:latest docker
+    // このプラグインだとパスの指定がdockerではなく、/full/path/dockerになるのでエラーになる...
+    // 他のプラグインもいまいちなので、直接Dockerを実行
+//    task _buildDockerImage(type: Docker, dependsOn: build) {
+//         // default tag; ${project.group}/${applicationName}:${tagVersion}
+//        applicationName = "harbor"
+//        tagVersion = "latest" // tagVersion: default project.version
+//        dockerfile = file('docker/Dockerfile')
+//
+//        doFirst {
+//            copy {
+//               from "build/libs/${project.name}.war"
+//               into "."
+//            }
+//        }
+//        doLast {
+//            delete '${project.name}.war'
+//        }
+//    }
+
 }
