@@ -17,6 +17,7 @@ package org.docksidestage.mylasta.direction;
 
 import javax.annotation.Resource;
 
+import org.docksidestage.app.logic.aws.secretsmanager.DefaultSecretsManagerClient;
 import org.docksidestage.mylasta.direction.sponsor.HarborActionAdjustmentProvider;
 import org.docksidestage.mylasta.direction.sponsor.HarborApiFailureHook;
 import org.docksidestage.mylasta.direction.sponsor.HarborCookieResourceProvider;
@@ -25,6 +26,7 @@ import org.docksidestage.mylasta.direction.sponsor.HarborJsonResourceProvider;
 import org.docksidestage.mylasta.direction.sponsor.HarborListedClassificationProvider;
 import org.docksidestage.mylasta.direction.sponsor.HarborMailDeliveryDepartmentCreator;
 import org.docksidestage.mylasta.direction.sponsor.HarborMultipartRequestHandler;
+import org.docksidestage.mylasta.direction.sponsor.HarborPropertyFilter;
 import org.docksidestage.mylasta.direction.sponsor.HarborSecurityResourceProvider;
 import org.docksidestage.mylasta.direction.sponsor.HarborTimeResourceProvider;
 import org.docksidestage.mylasta.direction.sponsor.HarborUserLocaleProcessProvider;
@@ -61,6 +63,8 @@ public class HarborFwAssistantDirector extends CachedFwAssistantDirector {
     //                                                                           =========
     @Resource
     private HarborConfig config;
+    @Resource
+    private DefaultSecretsManagerClient secretsManagerClient;
 
     // ===================================================================================
     //                                                                              Assist
@@ -68,6 +72,8 @@ public class HarborFwAssistantDirector extends CachedFwAssistantDirector {
     @Override
     protected void prepareAssistDirection(FwAssistDirection direction) {
         direction.directConfig(nameList -> nameList.add("harbor_config.properties"), "harbor_env.properties");
+
+        direction.directPropertyFilter(createPropertyFilter()); // SecretsManagerに対応したPropertyFilterを設定
     }
 
     // ===================================================================================
@@ -170,5 +176,13 @@ public class HarborFwAssistantDirector extends CachedFwAssistantDirector {
 
     protected MultipartResourceProvider createMultipartResourceProvider() {
         return () -> new HarborMultipartRequestHandler();
+    }
+
+    /**
+     * プロパティフィルター生成.
+     * @return プロパティフィルター (NotNull)
+     */
+    protected HarborPropertyFilter createPropertyFilter() {
+        return new HarborPropertyFilter();
     }
 }

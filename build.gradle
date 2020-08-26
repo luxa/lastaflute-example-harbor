@@ -131,17 +131,28 @@ allprojects  {
         // ===================================================================================
         //                                                                     Partner Library
         //                                                                     ===============
+        compile ("software.amazon.awssdk:secretsmanager:${awsJavaSdkVersion}") {
+            exclude group: 'commons-logging', module: 'commons-logging'
+        }
         runtime "javax.transaction:javax.transaction-api:${transactionApiVersion}"
+        compileOnly "javax.servlet:javax.servlet-api:${servletVersion}"
+        // compileOnly "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"  // コンパイルだけで使わない.
+        compile "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"
+        // -----------------------------------------------------
+        //                                               Logging
+        //                                               -------
         compile "org.slf4j:slf4j-api:${slf4jVersion}"
         runtime "ch.qos.logback:logback-classic:${logbackVersion}"
-        compileOnly "javax.servlet:javax.servlet-api:${servletVersion}"
-        compileOnly "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"  // コンパイルだけで使わない.
+        // commons-loggingを利用しているライブラリはjcl-over-slf4経由でslf4jから出力する
+        // ※ commons-loggingはdependenciesから除外すること(除外しないとLincolnログが出力されない)
+        runtime "org.slf4j:jcl-over-slf4j:${jclOverSlf4jVersion}"
 
         // ===================================================================================
         //                                                                GoodNeighbor Library
         //                                                                ====================
         compile "org.apache.commons:commons-lang3:${commonsLangVersion}"
         compile "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+        compile "org.eclipse.collections:eclipse-collections:${eclipseCollectionsVersion}"
 
         // ===================================================================================
         //                                                                           Unit Test
