@@ -136,8 +136,8 @@ allprojects  {
         }
         runtime "javax.transaction:javax.transaction-api:${transactionApiVersion}"
         compileOnly "javax.servlet:javax.servlet-api:${servletVersion}"
-        // compileOnly "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"  // コンパイルだけで使わない.
-        compile "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"
+        // compile "org.dbflute.jetty:jetty-boot:${jettyBootVersion}"
+
         // -----------------------------------------------------
         //                                               Logging
         //                                               -------
@@ -169,7 +169,7 @@ allprojects  {
     //                                                                      BUild WAR file
     //                                                                      ==============
     war {
-        archiveName = "${project.name}.war"
+        archiveName = "${warFile}"
         into('etc/testdb') { // H2のデータベースファイルをコピー
             from fileTree(dir:'etc/testdb', includes: ['maihamadb.mv.db'])
         }
@@ -185,10 +185,15 @@ allprojects  {
     // ===================================================================================
     //                                                                              Docker
     //                                                                              ======
+    // -----------------------------------------------------
+    //                             Define Image name and tag
+    //                             -------------------------
     def groupId    = "${appGroupId}"
     def artifactId = "harbor"
     def version    = "latest" // tagVersion: default project.version
-    def tag        = "${groupId}/${artifactId}:${version}"
+    // 開発環境用の定義(CodeBuildでは使わない)
+    def imageName  = "${groupId}/${artifactId}"
+    def tag        = "${version}"
 
     // -----------------------------------------------------
     //                                           Build Image
@@ -199,16 +204,16 @@ allprojects  {
 
         workingDir  "docker"
         commandLine "docker"
-        args 'build', '-t' , "${tag}", '.'
+        args 'build', '-t', "${imageName}:${tag}", '.'
 
         doFirst {
             copy {
-               from "build/libs/${project.name}.war"
+               from "build/libs/${warFile}"
                into "docker"
             }
         }
         doLast {
-            delete 'docker/${project.name}.war'
+            delete 'docker/${warFile}'
         }
     }
 
