@@ -7,6 +7,8 @@ phases:
   pre_build:
     commands:
       - echo Nothing to do in the pre_build phase...
+      - echo "WEBHOOK EVENT   ${CODEBUILD_WEBHOOK_EVENT}"
+      - echo "WEBHOOK TRIGGER ${CODEBUILD_WEBHOOK_TRIGGER}"
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
       - BRANCH=$(echo ${CODEBUILD_WEBHOOK_TRIGGER#branch/} | awk -F '/' '{ print $ 2}')
       - HASH=$(echo ${CODEBUILD_SOURCE_VERSION} | head -c 7)
