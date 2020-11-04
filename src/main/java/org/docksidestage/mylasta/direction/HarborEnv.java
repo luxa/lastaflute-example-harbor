@@ -77,6 +77,21 @@ public interface HarborEnv {
     /** The key of the configuration. e.g. 10 */
     String JDBC_CONNECTION_POOLING_SIZE = "jdbc.connection.pooling.size";
 
+    /** The key of the configuration. e.g. "other.profile" */
+    String AWS_PROFILE_OTHER = "aws.profile.other";
+
+    /** The key of the configuration. e.g. false */
+    String AWS_SECRETSMANAGER_MOCK = "aws.secretsmanager.mock";
+
+    /** The key of the configuration. e.g. ap-northeast-1 */
+    String AWS_SECRETSMANAGER_REGION = "aws.secretsmanager.region";
+
+    /** The key of the configuration. e.g. http://localhost:4584/ */
+    String AWS_SECRETSMANAGER_ENDPOINT_URL = "aws.secretsmanager.endpoint.url";
+
+    /** The key of the configuration. e.g.  */
+    String AWS_SSECRETMANAGER_TIMEOUT = "aws.ssecretmanager.timeout";
+
     /** The key of the configuration. e.g. localhost:8090/harbor */
     String SERVER_DOMAIN = "server.domain";
 
@@ -283,6 +298,60 @@ public interface HarborEnv {
     Integer getJdbcConnectionPoolingSizeAsInteger();
 
     /**
+     * Get the value for the key 'aws.profile.other'. <br>
+     * The value is, e.g. "other.profile" <br>
+     * comment: -------
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     */
+    String getAwsProfileOther();
+
+    /**
+     * Get the value for the key 'aws.secretsmanager.mock'. <br>
+     * The value is, e.g. false <br>
+     * comment: Does it mock secrets manager client? (true: not use Secrets Manager, use local storage)
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     */
+    String getAwsSecretsmanagerMock();
+
+    /**
+     * Is the property for the key 'aws.secretsmanager.mock' true? <br>
+     * The value is, e.g. false <br>
+     * comment: Does it mock secrets manager client? (true: not use Secrets Manager, use local storage)
+     * @return The determination, true or false. (if not found, exception but basically no way)
+     */
+    boolean isAwsSecretsmanagerMock();
+
+    /**
+     * Get the value for the key 'aws.secretsmanager.region'. <br>
+     * The value is, e.g. ap-northeast-1 <br>
+     * comment: Region/Endpoint setting
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     */
+    String getAwsSecretsmanagerRegion();
+
+    /**
+     * Get the value for the key 'aws.secretsmanager.endpoint.url'. <br>
+     * The value is, e.g. http://localhost:4584/ <br>
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     */
+    String getAwsSecretsmanagerEndpointUrl();
+
+    /**
+     * Get the value for the key 'aws.ssecretmanager.timeout'. <br>
+     * The value is, e.g.  <br>
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     */
+    String getAwsSsecretmanagerTimeout();
+
+    /**
+     * Get the value for the key 'aws.ssecretmanager.timeout' as {@link Integer}. <br>
+     * The value is, e.g.  <br>
+     * @return The value of found property. (NotNull: if not found, exception but basically no way)
+     * @throws NumberFormatException When the property is not integer.
+     */
+    Integer getAwsSsecretmanagerTimeoutAsInteger();
+
+    /**
      * Get the value for the key 'server.domain'. <br>
      * The value is, e.g. localhost:8090/harbor <br>
      * comment: domain to access this application from internet, e.g. for registration mail
@@ -389,6 +458,34 @@ public interface HarborEnv {
 
         public Integer getJdbcConnectionPoolingSizeAsInteger() {
             return getAsInteger(HarborEnv.JDBC_CONNECTION_POOLING_SIZE);
+        }
+
+        public String getAwsProfileOther() {
+            return get(HarborEnv.AWS_PROFILE_OTHER);
+        }
+
+        public String getAwsSecretsmanagerMock() {
+            return get(HarborEnv.AWS_SECRETSMANAGER_MOCK);
+        }
+
+        public boolean isAwsSecretsmanagerMock() {
+            return is(HarborEnv.AWS_SECRETSMANAGER_MOCK);
+        }
+
+        public String getAwsSecretsmanagerRegion() {
+            return get(HarborEnv.AWS_SECRETSMANAGER_REGION);
+        }
+
+        public String getAwsSecretsmanagerEndpointUrl() {
+            return get(HarborEnv.AWS_SECRETSMANAGER_ENDPOINT_URL);
+        }
+
+        public String getAwsSsecretmanagerTimeout() {
+            return get(HarborEnv.AWS_SSECRETMANAGER_TIMEOUT);
+        }
+
+        public Integer getAwsSsecretmanagerTimeoutAsInteger() {
+            return getAsInteger(HarborEnv.AWS_SSECRETMANAGER_TIMEOUT);
         }
 
         public String getServerDomain() {

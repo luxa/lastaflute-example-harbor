@@ -9,24 +9,25 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
 package org.docksidestage;
-
-import org.dbflute.jetty.JettyBoot;
 
 /**
  * @author jflute
  */
 public class HarborBoot { // #change_it_first
 
+    // JettyBoot使うとTomcatで起動時にエラーになるのでJettyの依存は除外する
+    // 時間があればTomcatBootに変更.
     public static void main(String[] args) { // e.g. java -Dlasta.env=production -jar harbor.war
-        new JettyBoot(8090, "/harbor").asDevelopment(isDevelopment()).bootAwait();
+        System.err.println("Run with docker, not support Jetty Boot ");
+        // new JettyBoot(8090, "/harbor").asDevelopment(isDevelopment()).bootAwait();
     }
 
-    private static boolean isDevelopment() {
-        return System.getProperty("lasta.env") == null;
-    }
+    //    private static boolean isDevelopment() {
+    //        return System.getProperty("lasta.env") == null;
+    //    }
 }

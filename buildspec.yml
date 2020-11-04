@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto8
+  pre_build:
+    commands:
+      - echo Nothing to do in the pre_build phase...
+      - echo "WEBHOOK EVENT   ${CODEBUILD_WEBHOOK_EVENT}"
+      - echo "WEBHOOK TRIGGER ${CODEBUILD_WEBHOOK_TRIGGER}"
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - BRANCH=$(echo ${CODEBUILD_WEBHOOK_TRIGGER#branch/} | awk -F '/' '{ print $ 2}')
+      - HASH=$(echo ${CODEBUILD_SOURCE_VERSION} | head -c 7)
+      - IMAGE_TAG=$(printf "%s.%s" $BRANCH $HASH)
+      - echo "IMAGE_TAG = $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "Execute replace schema."
+      - yes | sh ./dbflute_maihamadb/manage.sh 0
+      - echo "Build war file"
+      - ./gradlew --no-daemon -x test build
+      - echo "Build docker image"
+      - cp build/libs/luxa-harbor.war docker/
+      - (cd docker; docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .)
+
+  post_build:
+    commands:
+      - echo "Push docker image to ECR"
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker push                            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+#artifacts:
+#  files:
+#    - build/libs/luxa-harbor.war
+cache:
+  paths:
+    - '/root/.gradle/**/*'

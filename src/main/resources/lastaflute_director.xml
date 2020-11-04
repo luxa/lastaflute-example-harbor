@@ -4,4 +4,9 @@
 <components>
 	<component name="assistantDirector" class="org.docksidestage.mylasta.direction.HarborFwAssistantDirector"/>
 	<component name="harborConfig" class="org.docksidestage.mylasta.direction.HarborConfig$SimpleImpl"/>
+
+	<!-- 起動時にSecrets Managerを使うので使用するコンポーネントを追加 -->
+	<component name="awsSecretsManagerClientBuildingLogic" class="org.docksidestage.app.logic.aws.secretsmanager.AwsSecretsManagerClientBuildingLogic" />
+	<component name="secretsManagerClient"                 class="org.docksidestage.app.logic.aws.secretsmanager.DefaultSecretsManagerClient" />
+    <component name="awsSecretsManagerCache"               class="org.docksidestage.bizfw.aws.cache.AwsSecretsManagerCache" />
 </components>
